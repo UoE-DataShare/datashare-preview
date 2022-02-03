@@ -8,7 +8,7 @@ Create war file with
 `mvn clean package`
 
 <h3> Preparation for deployment on Datashare VM</h3>
-Create *datashare-preview* in home directory.
+Create *datashare-preview* in the home directory.
 
 `mkdir datashare-preview `
 
