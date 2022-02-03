@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "max-number_of-lines-previewed",
+    "type": "java.lang.String",
+    "description": "A description for 'max-number_of-lines-previewed'"
+  },
+  {
+    "name": "max-number-of-lines-to-preview",
+    "type": "java.lang.String",
+    "description": "A description for 'max-number-of-lines-to-preview'"
+  }
+]}
