@@ -1,5 +1,5 @@
 # datashare-preview
-A Spring Boot project to create a preview from a files attached to a dspace item.
+A Spring boot project to create a preview from a files attached to a dspace item.
 
 
 <h3>Packaging</h3>
@@ -8,7 +8,6 @@ Create war file with
 `mvn clean package`
 
 <h3> Preparation for deployment on Datashare VM</h3>
-
 Create *datashare-preview* in the home directory.
 
 `mkdir datashare-preview `
@@ -50,7 +49,7 @@ To the Tomcat *conf/server.xml* file add line in bold
 &lt;/Server&gt;
 
 
-To the Apache */etc/httpd/conf/httpd.conf* file add the last line 
+To the Apache */etc/httpd/conf/httpd.conf* add last line 
 
 `sudo /usr/bin/rvim /etc/httpd/conf/httpd.conf`
 
