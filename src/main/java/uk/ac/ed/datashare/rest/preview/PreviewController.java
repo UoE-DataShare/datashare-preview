@@ -1,6 +1,7 @@
 package uk.ac.ed.datashare.rest.preview;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -16,7 +17,6 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
 
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -55,7 +55,22 @@ public class PreviewController {
 			String encoding = detectEncoding(url.openStream());
 			encoding = encoding != null ? encoding : "UTF-8";
 
-			reader = new InputStreamReader(new BOMInputStream(url.openStream()), encoding);
+			@SuppressWarnings("resource")
+			Scanner scnr = new Scanner(url.openStream(), encoding);
+			// read from your scanner
+			int lineNumber = 1;
+			StringBuffer sb = new StringBuffer();
+
+			while(scnr.hasNextLine() && lineNumber <= maxNumOfRecordsToPreview + 5 ){
+				String line = scnr.nextLine();
+				line += "\n";
+				sb.append(line);
+				lineNumber++;
+			}
+            // Set Scanner to null
+			scnr = null;
+
+			reader = new InputStreamReader(new BOMInputStream(new ByteArrayInputStream(sb.toString().getBytes())), encoding);
 
 			parser = new CSVParser(reader, CSVFormat.EXCEL.withHeader().withSkipHeaderRecord(false));
 
