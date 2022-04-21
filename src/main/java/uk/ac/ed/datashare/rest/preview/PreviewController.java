@@ -1,16 +1,22 @@
 package uk.ac.ed.datashare.rest.preview;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
 
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,7 +33,7 @@ import com.ibm.icu.text.CharsetMatch;
 @RestController
 public class PreviewController {
 
-	private int maxNumOfLinesToPreview = 13;
+	private int maxNumOfRecordsToPreview = 20;
 	private final AtomicLong counter = new AtomicLong();
 
 
@@ -36,9 +42,11 @@ public class PreviewController {
 	@PostMapping(path = "/preview",
 	consumes = MediaType.APPLICATION_JSON_VALUE,
 	produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Preview> previewPost(@RequestBody FileInfo fileInfo) {
+	public ResponseEntity<Preview> previewPost(@RequestBody FileInfo fileInfo) throws IOException {
 		String msg = "";
 		String fullFileUrl = "";
+		Reader reader = null;
+		CSVParser parser = null;
 
 		try {
 			fullFileUrl = fileInfo.getFileUrl();
@@ -51,38 +59,68 @@ public class PreviewController {
 			Scanner scnr = new Scanner(url.openStream(), encoding);
 			// read from your scanner
 			int lineNumber = 1;
-			while(scnr.hasNextLine() && lineNumber <= maxNumOfLinesToPreview){
-				String line = scnr.nextLine();
-				msg += line + "\n";
-				lineNumber++;
+			StringBuffer sb = new StringBuffer();
 
+			while(scnr.hasNextLine() && lineNumber <= maxNumOfRecordsToPreview + 5 ){
+				String line = scnr.nextLine();
+				line += "\n";
+				sb.append(line);
+				lineNumber++;
+			}
+            // Set Scanner to null
+			scnr = null;
+
+			reader = new InputStreamReader(new BOMInputStream(new ByteArrayInputStream(sb.toString().getBytes())), encoding);
+
+			parser = new CSVParser(reader, CSVFormat.EXCEL.withHeader().withSkipHeaderRecord(false));
+
+			List<String> headers = parser.getHeaderNames();
+			String headerString = "";
+			for (String header: headers) {
+				int colNumber = 1;
+				headerString += header.replace(",", "&#44;");
+				if(colNumber < headers.size()) {
+					headerString += ",";
+				}
+				colNumber++;	
+			}
+			msg += headerString + "\n";
+
+			int recordNumber = 1;
+			while(recordNumber <= maxNumOfRecordsToPreview) {
+				for (final CSVRecord record : parser) {
+					String rowString = "";
+					int colNumber = 1;
+					for(String col: record) {
+						rowString += col.replace(",", "&#44;");
+						if(colNumber < record.size()) {
+							rowString += ",";
+						}
+						colNumber++;	
+					}
+					msg += rowString + "\n";
+					recordNumber++;
+				}
 			}
 
-
 		}
-		catch(IOException ex) {
+		catch(Exception ex) {
 			// there was some connection problem, or the file did not exist on the server,
 			// or your URL was not in the right format.
 			// think about what to do now, and put it here.
 			ex.printStackTrace(); // for now, simply output it.
 		}
+		finally {
+			try {
+				parser.close();
+			} catch (Exception e) {}
+			try {
+				reader.close();
+			} catch(Exception e) {}
+		}
+
 
 		return new ResponseEntity<>(new Preview(counter.incrementAndGet(), msg, fullFileUrl), HttpStatus.OK);
-	}
-
-	// From https://howtodoinjava.com/java/regex/java-clean-ascii-text-non-printable-chars/
-	private String cleanTextContent(String text) 
-	{
-		// strips off all non-ASCII characters
-		text = text.replaceAll("[^\\x00-\\x7F]", "");
-
-		// erases all the ASCII control characters
-		//	    text = text.replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "");
-
-		// removes non-printable characters from Unicode
-		//	    text = text.replaceAll("\\p{C}", "");
-
-		return text.trim();
 	}
 
 	// Java: How To Autodetect The Charset Encoding of A 
