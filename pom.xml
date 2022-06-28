@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>uk.ac.ed.datashare.rest</groupId>
 	<artifactId>datashare-preview</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.3-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>datashare-preview</name>
 	<description>Preview of files REST web application</description>
