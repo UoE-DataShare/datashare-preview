@@ -16,8 +16,8 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
-
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,14 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ibm.icu.text.CharsetDetector;
 import com.ibm.icu.text.CharsetMatch;
 
-
 @RestController
 public class PreviewController {
 
+	private static final Logger logger = LoggerFactory.getLogger(PreviewController.class);
 	private int maxNumOfRecordsToPreview = 20;
 	private final AtomicLong counter = new AtomicLong();
-
-
 
 	@CrossOrigin
 	@PostMapping(path = "/preview",
@@ -51,9 +49,13 @@ public class PreviewController {
 		try {
 			fullFileUrl = fileInfo.getFileUrl();
 			URL url = new URL(fullFileUrl);
+			
+			logger.debug("fullFileUrl: " + fullFileUrl);
 
 			String encoding = detectEncoding(url.openStream());
 			encoding = encoding != null ? encoding : "UTF-8";
+			
+			logger.debug("encoding: " + encoding);
 
 			@SuppressWarnings("resource")
 			Scanner scnr = new Scanner(url.openStream(), encoding);
@@ -119,7 +121,7 @@ public class PreviewController {
 			} catch(Exception e) {}
 		}
 
-
+		logger.debug("Response data msg is NOT EMPTY: " + !msg.isEmpty());
 		return new ResponseEntity<>(new Preview(counter.incrementAndGet(), msg, fullFileUrl), HttpStatus.OK);
 	}
 

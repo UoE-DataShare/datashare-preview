@@ -1,7 +1,5 @@
 package uk.ac.ed.datashare.rest.preview;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 public class Preview {
 
 	private long id;
