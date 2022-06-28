@@ -37,103 +37,94 @@ public class PreviewController {
 	private final AtomicLong counter = new AtomicLong();
 
 	@CrossOrigin
-	@PostMapping(path = "/preview",
-	consumes = MediaType.APPLICATION_JSON_VALUE,
-	produces = MediaType.APPLICATION_JSON_VALUE)
+	@PostMapping(path = "/preview", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Preview> previewPost(@RequestBody FileInfo fileInfo) throws IOException {
 		String msg = "";
 		String fullFileUrl = "";
-		Reader reader = null;
-		CSVParser parser = null;
 
 		try {
 			fullFileUrl = fileInfo.getFileUrl();
 			URL url = new URL(fullFileUrl);
-			
+
 			logger.debug("fullFileUrl: " + fullFileUrl);
 
-			String encoding = detectEncoding(url.openStream());
-			encoding = encoding != null ? encoding : "UTF-8";
-			
+			String encoding = "UTF-8"; // Default
+			try (InputStream urlOpenStreamForGettingEncoding = url.openStream()) {
+				encoding = detectEncoding(urlOpenStreamForGettingEncoding);
+				encoding = encoding != null ? encoding : "UTF-8";
+			}
+
 			logger.debug("encoding: " + encoding);
 
-			@SuppressWarnings("resource")
-			Scanner scnr = new Scanner(url.openStream(), encoding);
-			// read from your scanner
-			int lineNumber = 1;
-			StringBuffer sb = new StringBuffer();
+			try (InputStream urlOpenStreamForData = url.openStream()) {
+				@SuppressWarnings("resource")
+				Scanner scnr = new Scanner(urlOpenStreamForData, encoding);
+				// read from your scanner
+				int lineNumber = 1;
+				StringBuffer sb = new StringBuffer();
 
-			while(scnr.hasNextLine() && lineNumber <= maxNumOfRecordsToPreview + 5 ){
-				String line = scnr.nextLine();
-				line += "\n";
-				sb.append(line);
-				lineNumber++;
-			}
-            // Set Scanner to null
-			scnr = null;
-
-			reader = new InputStreamReader(new BOMInputStream(new ByteArrayInputStream(sb.toString().getBytes())), encoding);
-
-			parser = new CSVParser(reader, CSVFormat.EXCEL.withHeader().withSkipHeaderRecord(false));
-
-			List<String> headers = parser.getHeaderNames();
-			String headerString = "";
-			for (String header: headers) {
-				int colNumber = 1;
-				headerString += header.replace(",", "&#44;");
-				if(colNumber < headers.size()) {
-					headerString += ",";
+				while (scnr.hasNextLine() && lineNumber <= maxNumOfRecordsToPreview + 5) {
+					String line = scnr.nextLine();
+					line += "\n";
+					sb.append(line);
+					lineNumber++;
 				}
-				colNumber++;	
-			}
-			msg += headerString + "\n";
+				// Set Scanner to null
+				scnr = null;
 
-			int recordNumber = 1;
-			while(recordNumber <= maxNumOfRecordsToPreview) {
-				for (final CSVRecord record : parser) {
-					String rowString = "";
-					int colNumber = 1;
-					for(String col: record) {
-						rowString += col.replace(",", "&#44;");
-						if(colNumber < record.size()) {
-							rowString += ",";
+				try (Reader reader = new InputStreamReader(
+						new BOMInputStream(new ByteArrayInputStream(sb.toString().getBytes())), encoding);
+						CSVParser parser = new CSVParser(reader,
+								CSVFormat.EXCEL.withHeader().withSkipHeaderRecord(false));) {
+
+					List<String> headers = parser.getHeaderNames();
+					String headerString = "";
+					for (String header : headers) {
+						int colNumber = 1;
+						headerString += header.replace(",", "&#44;");
+						if (colNumber < headers.size()) {
+							headerString += ",";
 						}
-						colNumber++;	
+						colNumber++;
 					}
-					msg += rowString + "\n";
-					recordNumber++;
+					msg += headerString + "\n";
+
+					int recordNumber = 1;
+					while (recordNumber <= maxNumOfRecordsToPreview) {
+						for (final CSVRecord record : parser) {
+							String rowString = "";
+							int colNumber = 1;
+							for (String col : record) {
+								rowString += col.replace(",", "&#44;");
+								if (colNumber < record.size()) {
+									rowString += ",";
+								}
+								colNumber++;
+							}
+							msg += rowString + "\n";
+							recordNumber++;
+						}
+					}
 				}
 			}
-
-		}
-		catch(Exception ex) {
+		} catch (Exception ex) {
 			// there was some connection problem, or the file did not exist on the server,
 			// or your URL was not in the right format.
 			// think about what to do now, and put it here.
 			ex.printStackTrace(); // for now, simply output it.
-		}
-		finally {
-			try {
-				parser.close();
-			} catch (Exception e) {}
-			try {
-				reader.close();
-			} catch(Exception e) {}
 		}
 
 		logger.debug("Response data msg is NOT EMPTY: " + !msg.isEmpty());
 		return new ResponseEntity<>(new Preview(counter.incrementAndGet(), msg, fullFileUrl), HttpStatus.OK);
 	}
 
-	// Java: How To Autodetect The Charset Encoding of A 
+	// Java: How To Autodetect The Charset Encoding of A
 	// Text File and Remove Byte Order Mark (BOM).
 	// https://fahri.id/posts/java-how-to-autodetect-the-charset/
-
-
 	private String detectEncoding(InputStream inputStream) {
-		try {
-			BOMInputStream bomInputStream = new BOMInputStream(new BufferedInputStream(inputStream),
-					ByteOrderMark.UTF_8, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_32BE, ByteOrderMark.UTF_32LE);
+		try (BOMInputStream bomInputStream = new BOMInputStream(new BufferedInputStream(inputStream),
+				ByteOrderMark.UTF_8, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_32BE,
+				ByteOrderMark.UTF_32LE)) {
 
 			CharsetDetector detector = new CharsetDetector();
 			detector.setText(bomInputStream);
