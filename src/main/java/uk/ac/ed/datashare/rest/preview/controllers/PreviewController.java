@@ -1,4 +1,4 @@
-package uk.ac.ed.datashare.rest.preview;
+package uk.ac.ed.datashare.rest.preview.controllers;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
