@@ -29,6 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ibm.icu.text.CharsetDetector;
 import com.ibm.icu.text.CharsetMatch;
 
+import uk.ac.ed.datashare.rest.preview.domains.FileInfo;
+import uk.ac.ed.datashare.rest.preview.domains.Preview;
+
 @RestController
 public class PreviewController {
 

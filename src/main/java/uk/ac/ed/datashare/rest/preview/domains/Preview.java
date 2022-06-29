@@ -1,4 +1,4 @@
-package uk.ac.ed.datashare.rest.preview;
+package uk.ac.ed.datashare.rest.preview.domains;
 
 public class Preview {
 
