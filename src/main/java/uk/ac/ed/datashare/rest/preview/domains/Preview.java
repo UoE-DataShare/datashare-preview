@@ -1,6 +1,4 @@
-package uk.ac.ed.datashare.rest.preview;
-
-import org.springframework.beans.factory.annotation.Autowired;
+package uk.ac.ed.datashare.rest.preview.domains;
 
 public class Preview {
 
