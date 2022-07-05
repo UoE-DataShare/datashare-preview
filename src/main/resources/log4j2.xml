@@ -2,7 +2,8 @@
 <Configuration status="DEBUG" monitorInterval="30">
   <Properties>
     <Property name="LOG_PATTERN">%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %p %m%n</Property>
-    <Property name="APP_LOG_ROOT">logs</Property>
+    <!-- Log root set for Datashare VMs -->
+    <Property name="APP_LOG_ROOT">/home/lib/dspace/apache-tomcat-9.0.12/logs</Property>
   </Properties>
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT" follow="true">
